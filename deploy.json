@@ -44,7 +44,7 @@
                             "mode": "Incremental",
                             "templateLink": {
                                 "uri":"https://raw.githubusercontent.com/mikeoleary/azure-f5-bigiq-demo/master/bigiq/azureDeploy.json",
-                                "contentVersion":"7.2.0.0"
+                                "contentVersion":"1.0.0.0"
                             },
                             "parameters": {
                                 "adminUsername": {
