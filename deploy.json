@@ -30,7 +30,7 @@
                         "properties": {
                             "mode": "Incremental",
                             "templateLink": {
-                                "uri":"https://raw.githubusercontent.commikeoleary/azure-f5-bigiq-demo/master/vnet/azureDeploy.json",
+                                "uri":"https://raw.githubusercontent.com/mikeoleary/azure-f5-bigiq-demo/master/vnet/azureDeploy.json",
                                 "contentVersion":"1.0.0.0"
                             },
                             "parameters": {}
@@ -43,7 +43,7 @@
                         "properties": {
                             "mode": "Incremental",
                             "templateLink": {
-                                "uri":"https://raw.githubusercontent.commikeoleary/azure-f5-bigiq-demo/master/bigiq/azureDeploy.json",
+                                "uri":"https://raw.githubusercontent.com/mikeoleary/azure-f5-bigiq-demo/master/bigiq/azureDeploy.json",
                                 "contentVersion":"7.2.0.0"
                             },
                             "parameters": {
