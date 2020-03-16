@@ -1,0 +1,307 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "mgmtSubnetName": {
+            "type": "String",
+            "defaultValue": "mgmt"
+        },
+        "discoverySubnetName": {
+            "type": "String",
+            "defaultValue": "external"
+        },
+        "clusterSubnetName": {
+            "type": "String",
+            "defaultValue": "internal"
+        },
+        "trafficSubnetName": {
+            "type": "String",
+            "defaultValue": "untrust"
+        },        
+        "virtualNetworkId": {
+            "type": "String"
+        },
+        "virtualMachineName": {
+            "type": "String"
+        },
+        "osDiskType": {
+            "type": "String",
+            "defaultValue": "Premium_LRS",
+            "allowedValues":[
+                "Standard_LRS",
+                "Premium_LRS",
+                "StandardSSD_LRS",
+                "UltraSSD_LRS"
+            ]
+        },
+        "instanceType": {
+            "allowedValues": [
+                "Standard_A3",
+                "Standard_A4",
+                "Standard_A5",
+                "Standard_A6",
+                "Standard_A7",
+                "Standard_D3",
+                "Standard_D4",
+                "Standard_D11",
+                "Standard_D12",
+                "Standard_D13",
+                "Standard_D14",
+                "Standard_DS3",
+                "Standard_DS4",
+                "Standard_DS11",
+                "Standard_DS12",
+                "Standard_DS13",
+                "Standard_DS14",
+                "Standard_D3_v2",
+                "Standard_D4_v2",
+                "Standard_D5_v2",
+                "Standard_D11_v2",
+                "Standard_D12_v2",
+                "Standard_D13_v2",
+                "Standard_D14_v2",
+                "Standard_D15_v2",
+                "Standard_DS3_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_DS11_v2",
+                "Standard_DS12_v2",
+                "Standard_DS13_v2",
+                "Standard_DS14_v2",
+                "Standard_DS15_v2",
+                "Standard_F4",
+                "Standard_F8",
+                "Standard_F4S",
+                "Standard_F8S",
+                "Standard_F16S",
+                "Standard_G3",
+                "Standard_G4",
+                "Standard_G5",
+                "Standard_GS3",
+                "Standard_GS4",
+                "Standard_GS5"
+            ],
+            "defaultValue": "Standard_DS3_v2",
+            "metadata": {
+                "description": "Instance size of the Virtual Machine."
+            },
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "String"
+        },
+        "adminPassword": {
+            "type": "SecureString"
+        }
+    },
+    "variables": {
+        "diagnosticsStorageAccountName": "[concat(parameters('virtualMachineName'), variables('uniqueString'))]",
+        "diagnosticsStorageAccountType": "Standard_LRS",
+        "diagnosticsStorageAccountKind": "StorageV2",
+        "eth0Id": "[concat('/Microsoft.Network/networkInterfaces/', parameters('virtualMachineName'), '-eth0')]",
+        "eth1Id": "[concat('/Microsoft.Network/networkInterfaces/', parameters('virtualMachineName'), '-eth1')]",
+        "eth2Id": "[concat('/Microsoft.Network/networkInterfaces/', parameters('virtualMachineName'), '-eth2')]",
+        "eth3Id": "[concat('/Microsoft.Network/networkInterfaces/', parameters('virtualMachineName'), '-eth3')]",
+        "location": "[resourceGroup().location]",
+        "vnetId": "[parameters('virtualNetworkId')]",
+        "publicIpAddressName": "[concat(parameters('virtualMachineName'), '-publicIP')]",
+        "publicIpAddressType": "Static",
+        "publicIpAddressSku": "Standard",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('mgmtSubnetName'))]",
+        "subnetRef2": "[concat(variables('vnetId'), '/subnets/', parameters('discoverySubnetName'))]",
+        "subnetRef3": "[concat(variables('vnetId'), '/subnets/', parameters('clusterSubnetName'))]",
+        "subnetRef4": "[concat(variables('vnetId'), '/subnets/', parameters('trafficSubnetName'))]",
+        "uniqueString": "[uniqueString(resourceGroup().id, deployment().name)]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-07-01",
+            "dependsOn" : [
+                "[variables('publicIpAddressName')]"
+            ],
+            "name": "[concat(parameters('virtualMachineName'),'-eth0')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-07-01",
+            "name": "[concat(parameters('virtualMachineName'),'-eth1')]",
+            "location": "[variables('location')]",
+            "tags": {
+                "create by": "Jose Alvarado"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef2')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-07-01",
+            "name": "[concat(parameters('virtualMachineName'),'-eth2')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef3')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-07-01",
+            "name": "[concat(parameters('virtualMachineName'),'-eth3')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef4')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2019-02-01",
+            "name": "[variables('publicIpAddressName')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "[variables('publicIpAddressSku')]"
+            },
+            "properties": {
+                "publicIpAllocationMethod": "[variables('publicIpAddressType')]"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "name": "[parameters('virtualMachineName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[variables('eth1Id')]",
+                "[variables('eth2Id')]",
+                "[variables('eth3Id')]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]"
+            ],
+            "plan": {
+                "name": "f5-bigiq-virtual-edition-byol",
+                "publisher": "f5-networks",
+                "product": "f5-big-iq"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('instanceType')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('osDiskType')]"
+                        }
+                    },
+                    "imageReference": {
+                        "publisher": "f5-networks",
+                        "offer": "f5-big-iq",
+                        "sku": "f5-bigiq-virtual-edition-byol",
+                        "version": "7.0.001000"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/', variables('eth0Id'))]",
+                            "properties": {
+                                "primary": true
+                            }
+                        },
+                        {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/', variables('eth1Id'))]",
+                            "properties": {
+                                "primary": false
+                            }
+                        },
+                                                {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/', variables('eth2Id'))]",
+                            "properties": {
+                                "primary": false
+                            }
+                        },
+                                                {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/', variables('eth3Id'))]",
+                            "properties": {
+                                "primary": false
+                            }
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachineName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[concat('https://', variables('diagnosticsStorageAccountName'), '.blob.core.windows.net/')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('diagnosticsStorageAccountName')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "[variables('diagnosticsStorageAccountType')]"
+            },
+            "kind": "[variables('diagnosticsStorageAccountKind')]",
+            "properties": {}
+        }
+    ],
+    "outputs": {
+        "publicIPAddress": {
+            "type": "String",
+            "value": "[reference(variables('publicIPAddressName')).ipAddress]"
+        }
+    }
+}

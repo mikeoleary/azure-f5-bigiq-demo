@@ -1,0 +1,420 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "7.2.0.0",
+    "parameters": {
+        "restrictedSrcAddress": {
+            "defaultValue": "*",
+            "metadata": {
+                "description": "This field restricts management access to a specific network or address. Enter an IP address or address range in CIDR notation, or asterisk for all sources"
+            },
+            "type": "string"
+        },
+        "tagValues": {
+            "defaultValue": {
+                "application": "APP",
+                "cost": "COST",
+                "environment": "ENV",
+                "group": "GROUP",
+                "owner": "OWNER"
+            },
+            "metadata": {
+                "description": "Default key/value resource tags will be added to the resources in this deployment, if you would like the values to be unique adjust them as needed for each key."
+            },
+            "type": "object"
+        },
+        "vnetAddressPrefix": {
+            "defaultValue": "10.0",
+            "metadata": {
+                "description": "The start of the CIDR block the BIG-IP VEs use when creating the Vnet and subnets.  You MUST type just the first two octets of the /16 virtual network that will be created, for example '10.0', '10.100', 192.168'."
+            },
+            "type": "string"
+        }
+    },
+    "variables" :{
+        "networkApiVersion": "2017-11-01",
+        "location": "[resourceGroup().location]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "virtualNetworkName": "[concat(variables('resourceGroupName'), '-vnet')]",
+        "mgmtSubnetName": "mgmt",
+        "mgmtNsgName": "mgmtNsg",
+        "mgmtNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups/',variables('mgmtNsgName'))]",
+        "mgmtSubnetId": "[concat(variables('vnetId'), '/subnets/', variables('mgmtSubnetName'))]",
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "extSubnetName": "external",
+        "extNsgName" : "externalNsg",
+        "extNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('extNsgName'))]",
+        "extSubnetId": "[concat(variables('vnetId'), '/subnets/', variables('extsubnetName'))]",
+        "intSubnetName": "internal",
+        "intSubnetId": "[concat(variables('vnetId'), '/subnets/', variables('intsubnetName'))]",
+        "intNsgName" : "internalNsg",
+        "intNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('intNsgName'))]",
+        "untrustSubnetName": "untrust",
+        "untrustSubnetId": "[concat(variables('vnetId'), '/subnets/', variables('untrustsubnetName'))]",
+        "untrustNsgName" : "unstrustNsg",
+        "untrustNsgId" : "[resourceId('Microsoft.Network/networkSecurityGroups/',concat(variables('untrustNsgName')))]",
+        "trustSubnetName": "trust",
+        "trustSubnetId": "[concat(variables('vnetId'), '/subnets/', variables('trustsubnetName'))]",
+        "trustNsgName" : "trustNsg",
+        "trustNsgId" : "[resourceId('Microsoft.Network/networkSecurityGroups/',concat(variables('trustNsgName')))]",
+        "appSubnet1Name": "appSubnet1",
+        "appSubnet1Prefix": "[concat(parameters('vnetAddressPrefix'), '.5.0/24')]",
+        "appSubnet1Id": "[concat(variables('vnetId'), '/subnets/', variables('appSubnet1Name'))]",
+        "appSubnet1NsgName": "appSubnet1Nsg",
+        "appSubnet1NsgId": "[resourceId('Microsoft.Network/networkSecurityGroups/',concat(variables('appSubnet1NsgName')))]",
+        "appSubnet2Name": "appSubnet2",
+        "appSubnet2Prefix": "[concat(parameters('vnetAddressPrefix'), '.6.0/24')]",
+        "appSubnet2Id": "[concat(variables('vnetId'), '/subnets/', variables('appSubnet2Name'))]",
+        "vnetAddressPrefix": "[concat(parameters('vnetAddressPrefix'),'.0.0/16')]",
+        "mgmtSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.0.0/24')]",
+        "extSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.3.0/24')]",
+        "intSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.4.0/24')]",
+        "untrustSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.1.0/24')]",
+        "trustSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.2.0/24')]",
+        "tagValues": "[parameters('tagValues')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('networkApiVersion')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('intNsgName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "securityRules": []
+            }
+        }, 
+        {
+            "apiVersion": "[variables('networkApiVersion')]",
+            "location": "[variables('location')]",
+            "name": "[variables('mgmtNsgName')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "mgmt_allow_https",
+                        "properties": {
+                            "access": "Allow",
+                            "description": "",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "443",
+                            "direction": "Inbound",
+                            "priority": 101,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
+                            "sourcePortRange": "*"
+                        }
+                    },
+                    {
+                        "name": "ssh_allow_22",
+                        "properties": {
+                            "access": "Allow",
+                            "description": "",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "22",
+                            "direction": "Inbound",
+                            "priority": 102,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
+                            "sourcePortRange": "*"
+                        }
+                    }
+                ]
+            },
+            "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+            "type": "Microsoft.Network/networkSecurityGroups"
+        },
+        {
+            "apiVersion": "[variables('networkApiVersion')]",
+            "location": "[variables('location')]",
+            "name": "[variables('extNsgName')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "https_allow_443",
+                        "properties": {
+                            "access": "Allow",
+                            "description": "",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "443",
+                            "direction": "Inbound",
+                            "priority": 101,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
+                            "sourcePortRange": "*"
+                        }
+                    },
+                    {
+                        "name": "http_allow_80",
+                        "properties": {
+                            "access": "Allow",
+                            "description": "",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "80",
+                            "direction": "Inbound",
+                            "priority": 102,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
+                            "sourcePortRange": "*"
+                        }
+                    },
+                    {
+                        "name": "ssh_allow_22",
+                        "properties": {
+                            "access": "Allow",
+                            "description": "",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "22",
+                            "direction": "Inbound",
+                            "priority": 103,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
+                            "sourcePortRange": "*"
+                        }
+                    }
+                ]
+            },
+            "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+            "type": "Microsoft.Network/networkSecurityGroups"
+        },
+        {
+            "apiVersion": "[variables('networkApiVersion')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('untrustNsgName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                    "name": "allow-inbound-allports",
+                        "properties": {
+                            "description": "Rule",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        }, 
+        {
+            "apiVersion": "[variables('networkApiVersion')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('trustNsgName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "securityRules": []
+            }
+        },
+        {
+            "apiVersion": "[variables('networkApiVersion')]",
+            "location": "[variables('location')]",
+            "name": "[variables('appSubnet1NsgName')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "https_allow_443",
+                        "properties": {
+                            "access": "Allow",
+                            "description": "",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "443",
+                            "direction": "Inbound",
+                            "priority": 101,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
+                            "sourcePortRange": "*"
+                        }
+                    },
+                    {
+                        "name": "http_allow_80",
+                        "properties": {
+                            "access": "Allow",
+                            "description": "",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "80",
+                            "direction": "Inbound",
+                            "priority": 102,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
+                            "sourcePortRange": "*"
+                        }
+                    },
+                    {
+                        "name": "ssh_allow_22",
+                        "properties": {
+                            "access": "Allow",
+                            "description": "",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "22",
+                            "direction": "Inbound",
+                            "priority": 103,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
+                            "sourcePortRange": "*"
+                        }
+                    }
+                ]
+            },
+            "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+            "type": "Microsoft.Network/networkSecurityGroups"
+        },
+        {
+            "apiVersion": "[variables('networkApiVersion')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[variables('extNsgId')]",
+                "[variables('intNsgId')]",
+                "[variables('untrustNsgId')]",
+                "[variables('trustNsgId')]",
+                "[variables('mgmtNsgId')]",
+                "[variables('appSubnet1NsgId')]"
+            ],
+            "name": "[variables('virtualNetworkName')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnetAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('mgmtSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('mgmtSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('mgmtNsgId')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('extSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('extSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('extNsgId')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('intSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('intSubnetPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('untrustSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('untrustSubnetPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('untrustNsgId')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('trustSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('trustSubnetPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('appSubnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('appSubnet1Prefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('appSubnet1NsgId')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('appSubnet2Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('appSubnet2Prefix')]"
+                        }
+                    }
+                ]
+            },
+            "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+            "type": "Microsoft.Network/virtualNetworks"
+        }
+    ],
+    "outputs": {
+        "virtualNetworkAddressPrefix": {
+            "type": "string",
+            "value": "[reference(variables('virtualNetworkName')).AddressSpace.AddressPrefixes[0]]"
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "value": "[variables('virtualNetworkName')]"
+        },
+        "virtualNetworkId": {
+            "type": "string",
+            "value": "[variables('vnetId')]"
+        },
+        "mgmtSubnetId": {
+            "type": "string",
+            "value": "[variables('mgmtSubnetId')]"
+        },
+        "mgmtSubnetName": {
+            "type": "string",
+            "value": "[variables('mgmtSubnetName')]"
+        },
+        "untrustSubnetId": {
+            "type": "string",
+            "value": "[variables('untrustSubnetId')]"
+        },
+        "untrustSubnetName": {
+            "type": "string",
+            "value": "[variables('untrustSubnetName')]"
+        },
+        "trustSubnetId": {
+            "type": "string",
+            "value": "[variables('trustSubnetId')]"
+        },
+        "trustSubnetName": {
+            "type": "string",
+            "value": "[variables('trustSubnetName')]"
+        },
+        "externalSubnetId": {
+            "type": "string",
+            "value": "[variables('extSubnetId')]"
+        },
+        "extSubnetName": {
+            "type": "string",
+            "value": "[variables('extSubnetName')]"
+        },
+        "internalSubnetId": {
+            "type": "string",
+            "value": "[variables('intSubnetId')]"
+        },
+        "intSubnetName": {
+            "type": "string",
+            "value": "[variables('intSubnetName')]"
+        },
+        "appSubnet1Id": {
+            "type": "string",
+            "value": "[variables('appSubnet1Id')]"
+        },
+        "appSubnet1Name": {
+            "type": "string",
+            "value": "[variables('appSubnet1Name')]"
+        },
+        "appSubnet1Prefix": {
+            "type": "string",
+            "value": "[variables('appSubnet1Prefix')]"
+        },
+        "appSubnet2Id": {
+            "type": "string",
+            "value": "[variables('appSubnet2Id')]"
+        },
+        "extNsgId":{
+            "type": "string",
+            "value": "[variables('extNsgId')]"
+        },
+        "extSubnetPrefix":{
+            "type": "string",
+            "value": "[variables('extSubnetPrefix')]"
+        }
+    }
+}

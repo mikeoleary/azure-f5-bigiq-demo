@@ -1,0 +1,88 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUserName": {
+            "metadata": {
+                "description": "User Name for network devices"
+            },
+            "type": "string"
+        },
+        "password": {
+            "metadata": {
+                "description": "Password or SSH public key to login to the Virtual Machine. Note: There are a number of special characters that you should avoid using for F5 product user accounts.  See [K2873](https://support.f5.com/csp/article/K2873) for details. Note: If using key-based authentication, this should be the public key as a string, typically starting with **---- BEGIN SSH2 PUBLIC KEY ----** and ending with **---- END SSH2 PUBLIC KEY ----**."
+            },
+            "type": "securestring"
+        },
+        "virtualMachineName": {
+           "metadata": {
+                "description": "Name of BIG-IQ VM."
+            },
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+                    {
+                        "type": "Microsoft.Resources/deployments",
+                        "apiVersion": "2018-05-01",
+                        "name": "vnetLinkedTemplate",
+                        "properties": {
+                            "mode": "Incremental",
+                            "templateLink": {
+                                "uri":"https://raw.githubusercontent.commikeoleary/azure-f5-bigiq-demo/master/vnet/azureDeploy.json",
+                                "contentVersion":"1.0.0.0"
+                            },
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "type": "Microsoft.Resources/deployments",
+                        "apiVersion": "2018-05-01",
+                        "name": "bigiqLinkedTemplate",
+                        "properties": {
+                            "mode": "Incremental",
+                            "templateLink": {
+                                "uri":"https://raw.githubusercontent.commikeoleary/azure-f5-bigiq-demo/master/bigiq/azureDeploy.json",
+                                "contentVersion":"7.2.0.0"
+                            },
+                            "parameters": {
+                                "adminUsername": {
+                                    "value": "[parameters('adminUserName')]"
+                                },
+                                "adminPassword":{
+                                    "value": "[parameters('password')]"
+                                    },
+                                "virtualMachineName": {
+                                    "value": "[parameters('virtualMachineName')]"
+                                },
+                                "virtualNetworkId": {
+                                    "value": "[reference('vnetLinkedTemplate').outputs.virtualNetworkId.value]"
+                                },
+                                "mgmtSubnetName": {
+                                    "value": "[reference('vnetLinkedTemplate').outputs.mgmtSubnetName.value]"
+                                },
+                                "discoverySubnetName": {
+                                    "value": "[reference('vnetLinkedTemplate').outputs.untrustSubnetName.value]"
+                                },
+                                "clusterSubnetName": {
+                                    "value": "[reference('vnetLinkedTemplate').outputs.trustSubnetName.value]"
+                                },
+                                "trafficSubnetName": {
+                                    "value": "[reference('vnetLinkedTemplate').outputs.extSubnetName.value]"
+                                }            
+                            }
+                        }
+                    }
+                ],
+    "outputs": {
+        "appUrl": {
+            "type": "string",
+            "value": "[reference('vnetLinkedTemplate').outputs.vnetid.value]"
+            },      
+        "fw1mgmtIP": {
+            "type": "string",
+            "value": "[reference('bigiqLinkedTemplate').outputs.fw1mgmtIP.value]"
+            }
+    }
+}
