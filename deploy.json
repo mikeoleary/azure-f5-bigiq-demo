@@ -75,14 +75,10 @@
                         }
                     }
                 ],
-    "outputs": {
-        "appUrl": {
+    "outputs": {  
+        "BIG-IQ-mgmt-address": {
             "type": "string",
-            "value": "[reference('vnetLinkedTemplate').outputs.vnetid.value]"
-            },      
-        "fw1mgmtIP": {
-            "type": "string",
-            "value": "[reference('bigiqLinkedTemplate').outputs.fw1mgmtIP.value]"
+            "value": "[reference('bigiqLinkedTemplate').outputs.publicIPAddress.value]"
             }
     }
 }
