@@ -6,30 +6,11 @@
 param(
 
   [string] [Parameter(Mandatory=$True)] $adminUsername,
-  #[string] [Parameter(Mandatory=$True)] $authenticationType,
   [string] [Parameter(Mandatory=$True)] $password,
-  [string] [Parameter(Mandatory=$True)] $dnsLabel,
-  #[string] [Parameter(Mandatory=$True)] $instanceName,
-  #[string] [Parameter(Mandatory=$True)] $numberOfExternalIps,
-  #[string] [Parameter(Mandatory=$True)] $enableNetworkFailover,
-  #[string] [Parameter(Mandatory=$True)] $internalLoadBalancerType,
-  #[string] [Parameter(Mandatory=$True)] $internalLoadBalancerProbePort,
-  #[string] [Parameter(Mandatory=$True)] $instanceType,
-  #[string] [Parameter(Mandatory=$True)] $imageName,
-  #[string] [Parameter(Mandatory=$True)] $bigIpVersion,
-  #[string] [Parameter(Mandatory=$True)] $bigIpModules,
-  #[string] [Parameter(Mandatory=$True)] $vnetAddressPrefix,
-  #[string] [Parameter(Mandatory=$True)] $declarationUrl,
-  #[string] [Parameter(Mandatory=$True)] $ntpServer,
-  #[string] [Parameter(Mandatory=$True)] $timeZone,
-  #[string] [Parameter(Mandatory=$True)] $customImage,
-  #[string] $restrictedSrcAddress = "*",
-  #$tagValues = '{"application": "APP", "cost": "COST", "environment": "ENV", "group": "GROUP", "owner": "OWNER"}',
-  #[string] [Parameter(Mandatory=$True)] $allowUsageAnalytics,
+  [string] [Parameter(Mandatory=$True)] $virtualMachineName,
   [string] [Parameter(Mandatory=$True)] $resourceGroupName,
   [string] [Parameter(Mandatory=$True)] $region,
   [string] $templateFilePath = "deploy.json"
-  #[string] $parametersFilePath = "deploy.parameters.json"
 )
 
 Write-Host "Disclaimer: Scripting to Deploy F5 Solution templates into Cloud Environments are provided as examples. They will be treated as best effort for issues that occur, feedback is encouraged." -foregroundcolor green
@@ -54,7 +35,7 @@ $adminPasswordOrKeySecure = ConvertTo-SecureString -String $password -AsPlainTex
 #(ConvertFrom-Json $tagValues).psobject.properties | ForEach -Begin {$tagValues=@{}} -process {$tagValues."$($_.Name)" = $_.Value}
 
 # Create Arm Deployment
-$deployment = New-AzureRmResourceGroupDeployment -Name $resourceGroupName -ResourceGroupName $resourceGroupName -TemplateFile $templateFilePath -Verbose -adminUsername $adminUsername -password $adminPasswordOrKeySecure -dnsLabel $dnsLabel
+$deployment = New-AzureRmResourceGroupDeployment -Name $resourceGroupName -ResourceGroupName $resourceGroupName -TemplateFile $templateFilePath -Verbose -adminUsername $adminUsername -password $adminPasswordOrKeySecure -virtualMachineName $virtualMachineName
 
 # Print Output of Deployment to Console
 $deployment
