@@ -79,9 +79,10 @@
                 "Standard_G5",
                 "Standard_GS3",
                 "Standard_GS4",
-                "Standard_GS5"
+                "Standard_GS5",
+                "Standard_D8_v3"
             ],
-            "defaultValue": "Standard_DS3_v2",
+            "defaultValue": "Standard_D8_v3",
             "metadata": {
                 "description": "Instance size of the Virtual Machine."
             },
