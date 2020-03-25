@@ -218,6 +218,7 @@
             "name": "[parameters('virtualMachineName')]",
             "location": "[variables('location')]",
             "dependsOn": [
+                "[variables('eth0Id')]",
                 "[variables('eth1Id')]",
                 "[variables('eth2Id')]",
                 "[variables('eth3Id')]",
