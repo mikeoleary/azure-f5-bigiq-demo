@@ -146,9 +146,6 @@
             "apiVersion": "2019-07-01",
             "name": "[concat(parameters('virtualMachineName'),'-eth1')]",
             "location": "[variables('location')]",
-            "tags": {
-                "create by": "Jose Alvarado"
-            },
             "properties": {
                 "ipConfigurations": [
                     {
