@@ -66,8 +66,8 @@
         "appSubnet2Id": "[concat(variables('vnetId'), '/subnets/', variables('appSubnet2Name'))]",
         "vnetAddressPrefix": "[concat(parameters('vnetAddressPrefix'),'.0.0/16')]",
         "mgmtSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.0.0/24')]",
-        "extSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.3.0/24')]",
-        "intSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.4.0/24')]",
+        "extSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.4.0/24')]",
+        "intSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.3.0/24')]",
         "untrustSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.1.0/24')]",
         "trustSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.2.0/24')]",
         "tagValues": "[parameters('tagValues')]"
